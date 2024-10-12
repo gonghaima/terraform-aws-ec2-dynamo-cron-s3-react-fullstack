@@ -24,4 +24,7 @@ aws configure
 ##### run "terraform init"
 ##### run "trraform plan"
 
+## Backend
+#### npx express-generator-typescript Backend
+
 

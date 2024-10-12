@@ -2,7 +2,221 @@
 a2.json
 .env
 tmp.txt
+const express = require('express');
+const AWS = require('aws-sdk');
+const bodyParser = require('body-parser');
+const cors = require('cors');
+const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 
+const app = express();
+const port = 80;
+
+AWS.config.update({ region: 'us-west-2' });
+const dynamoDB = new AWS.DynamoDB.DocumentClient();
+const s3 = new AWS.S3();
+
+app.use(bodyParser.json());
+app.use(cors());
+
+const loginTable = "login";
+const musicTable = "music";
+const bucketName = "your-react-app-bucket";
+
+// Helper function to create DynamoDB tables
+const createTable = async (params) => {
+  const dynamodb = new AWS.DynamoDB();
+  try {
+    await dynamodb.createTable(params).promise();
+    console.log(`Table ${params.TableName} created successfully.`);
+  } catch (error) {
+    console.error(`Error creating table ${params.TableName}:`, error);
+  }
+};
+
+// Create login table
+createTable({
+  TableName: loginTable,
+  KeySchema: [{ AttributeName: "email", KeyType: "HASH" }],
+  AttributeDefinitions: [{ AttributeName: "email", AttributeType: "S" }],
+  BillingMode: "PAY_PER_REQUEST"
+});
+
+// Create music table
+createTable({
+  TableName: musicTable,
+  KeySchema: [{ AttributeName: "title", KeyType: "HASH" }],
+  AttributeDefinitions: [{ AttributeName: "title", AttributeType: "S" }],
+  BillingMode: "PAY_PER_REQUEST"
+});
+
+// Load data from a2.json to music table
+const loadMusicData = async () => {
+  const musicData = require('./a2.json');
+  for (const item of musicData) {
+    const params = {
+      TableName: musicTable,
+      Item: item
+    };
+    try {
+      await dynamoDB.put(params).promise();
+      console.log(`Inserted item: ${item.title}`);
+    } catch (error) {
+      console.error(`Error inserting item ${item.title}:`, error);
+    }
+  }
+};
+loadMusicData();
+
+// Download artist images and upload to S3
+const downloadAndUploadImages = async () => {
+  const musicData = require('./a2.json');
+  const axios = require('axios');
+  const fs = require('fs');
+  const path = require('path');
+
+  for (const item of musicData) {
+    const imageUrl = item.image_url;
+    const imageName = path.basename(imageUrl);
+    const imagePath = path.join(__dirname, 'images', imageName);
+
+    try {
+      const response = await axios({
+        url: imageUrl,
+        responseType: 'stream'
+      });
+      response.data.pipe(fs.createWriteStream(imagePath));
+      response.data.on('end', async () => {
+        const fileContent = fs.readFileSync(imagePath);
+        const params = {
+          Bucket: bucketName,
+          Key: `images/${imageName}`,
+          Body: fileContent,
+          ACL: 'public-read'
+        };
+        await s3.upload(params).promise();
+        console.log(`Uploaded image: ${imageName}`);
+      });
+    } catch (error) {
+      console.error(`Error downloading/uploading image ${imageName}:`, error);
+    }
+  }
+};
+downloadAndUploadImages();
+
+// User registration
+app.post('/register', async (req, res) => {
+  const { email, user_name, password } = req.body;
+  const hashedPassword = await bcrypt.hash(password, 10);
+
+  const params = {
+    TableName: loginTable,
+    Item: {
+      email,
+      user_name,
+      password: hashedPassword
+    }
+  };
+
+  try {
+    await dynamoDB.put(params).promise();
+    res.status(201).send('User registered successfully');
+  } catch (error) {
+    res.status(500).send('Error registering user');
+  }
+});
+
+// User login
+app.post('/login', async (req, res) => {
+  const { email, password } = req.body;
+
+  const params = {
+    TableName: loginTable,
+    Key: { email }
+  };
+
+  try {
+    const data = await dynamoDB.get(params).promise();
+    if (data.Item && await bcrypt.compare(password, data.Item.password)) {
+      const token = jwt.sign({ email }, 'secret', { expiresIn: '1h' });
+      res.status(200).json({ token });
+    } else {
+      res.status(401).send('Invalid email or password');
+    }
+  } catch (error) {
+    res.status(500).send('Error logging in');
+  }
+});
+
+// Middleware to authenticate JWT token
+const authenticateToken = (req, res, next) => {
+  const token = req.headers['authorization'];
+  if (!token) return res.status(401).send('Access denied');
+
+  jwt.verify(token, 'secret', (err, user) => {
+    if (err) return res.status(403).send('Invalid token');
+    req.user = user;
+    next();
+  });
+};
+
+// Get user subscribed music
+app.get('/subscriptions', authenticateToken, async (req, res) => {
+  const params = {
+    TableName: musicTable,
+    FilterExpression: 'contains(subscribers, :email)',
+    ExpressionAttributeValues: { ':email': req.user.email }
+  };
+
+  try {
+    const data = await dynamoDB.scan(params).promise();
+    res.status(200).json(data.Items);
+  } catch (error) {
+    res.status(500).send('Error fetching subscriptions');
+  }
+});
+
+// Subscribe to music
+app.post('/subscribe', authenticateToken, async (req, res) => {
+  const { title } = req.body;
+
+  const params = {
+    TableName: musicTable,
+    Key: { title },
+    UpdateExpression: 'ADD subscribers :email',
+    ExpressionAttributeValues: { ':email': req.user.email }
+  };
+
+  try {
+    await dynamoDB.update(params).promise();
+    res.status(200).send('Subscribed successfully');
+  } catch (error) {
+    res.status(500).send('Error subscribing to music');
+  }
+});
+
+// Unsubscribe from music
+app.post('/unsubscribe', authenticateToken, async (req, res) => {
+  const { title } = req.body;
+
+  const params = {
+    TableName: musicTable,
+    Key: { title },
+    UpdateExpression: 'DELETE subscribers :email',
+    ExpressionAttributeValues: { ':email': req.user.email }
+  };
+
+  try {
+    await dynamoDB.update(params).promise();
+    res.status(200).send('Unsubscribed successfully');
+  } catch (error) {
+    res.status(500).send('Error unsubscribing from music');
+  }
+});
+
+app.listen(port, () => {
+  console.log(`Server running on port ${port}`);
+});
 
 # terraform ignore as below
 # Local .terraform directories
@@ -42,3 +256,6 @@ override.tf.json
 # Ignore CLI configuration files
 .terraformrc
 terraform.rc
+Backend/node_modules/
+Backend/dist/**/*
+Backend/.env
