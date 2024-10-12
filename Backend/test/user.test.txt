@@ -1,0 +1,6 @@
+
+create new user
+curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"id\": \"1\", \"username\": \"testuser\", \"password\": \"password\"}"
+
+get user
+curl http://localhost:3000/login/1

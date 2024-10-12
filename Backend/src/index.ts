@@ -1,17 +1,15 @@
-import express, { Request, Response } from 'express';
-import cors from 'cors';
+import express from 'express';
+import loginRoutes from './routes/loginRoutes';
+import musicRoutes from './routes/musicRoutes';
 
 const app = express();
 const port = 3000;
 
-// Enable CORS
-app.use(cors());
+app.use(express.json());
 
-// Define a simple route
-app.get('/', (req: Request, res: Response) => {
-  res.send('Hello, world!');
-});
+app.use('/login', loginRoutes);
+app.use('/music', musicRoutes);
 
 app.listen(port, () => {
-  console.log(`Server is running at http://localhost:${port}`);
+    console.log(`Server running on port ${port}`);
 });

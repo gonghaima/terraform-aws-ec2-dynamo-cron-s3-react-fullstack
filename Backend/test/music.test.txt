@@ -1,0 +1,5 @@
+create music
+curl -X POST http://localhost:3000/music -H "Content-Type: application/json" -d "{\"id\": \"1\", \"title\": \"testtitle\", \"artist\": \"testartist\"}"
+
+get music
+curl http://localhost:3000/music/1
