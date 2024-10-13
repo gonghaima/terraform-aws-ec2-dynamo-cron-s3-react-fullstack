@@ -6,7 +6,9 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "load-data": "ts-node src/loadData.ts",
-    "build": "tsc"
+    "build": "tsc",
+    "deploy": "node deploy.js",
+    "nodemon-start": "nodemon --watch src --exec ts-node src/index.ts"
   },
   "keywords": [],
   "author": "",
@@ -24,6 +26,7 @@
     "@types/node": "^22.7.5",
     "@types/uuid": "^10.0.0",
     "ts-node": "^10.9.2",
-    "typescript": "^5.6.3"
+    "typescript": "^5.6.3",
+    "nodemon": "^2.0.15"
   }
 }

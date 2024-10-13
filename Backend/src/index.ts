@@ -10,6 +10,7 @@ app.use(express.json());
 app.use('/login', loginRoutes);
 app.use('/music', musicRoutes);
 
-app.listen(port, () => {
+// Listen on all network interfaces
+app.listen(port, '0.0.0.0', () => {
     console.log(`Server running on port ${port}`);
 });

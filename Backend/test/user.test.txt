@@ -4,3 +4,6 @@ curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d 
 
 get user
 curl http://localhost:3000/login/1
+
+curl http://13.210.73.97:3000/login/1
+

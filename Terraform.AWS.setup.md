@@ -34,7 +34,7 @@
    
     ```bash
         provider "aws" {
-            region = "us-east-1"  # Replace with your preferred region
+            region = "ap-southeast-2"  # Replace with your preferred region
         }
 
         resource "aws_instance" "example" {

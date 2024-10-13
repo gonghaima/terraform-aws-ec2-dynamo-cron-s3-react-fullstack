@@ -261,3 +261,6 @@ terraform.rc
 Backend/node_modules/
 Backend/dist/**/*
 Backend/.env
+my-ec2-key.ppk
+Backend.zip
+my-ec2-key.pem
