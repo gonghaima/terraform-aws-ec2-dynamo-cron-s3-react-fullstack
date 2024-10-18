@@ -112,6 +112,13 @@ resource "aws_security_group" "web_sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    from_port   = 3000
+    to_port     = 3000
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -132,7 +139,68 @@ resource "aws_s3_bucket" "deployment_bucket" {
   }
 }
 
+resource "aws_s3_bucket" "react_app_bucket" {
+  bucket = "frontend-app-bucket-123e4567-e89b-12d3-a456-426614174090"
+
+  tags = {
+    Name = "react-app-bucket"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "react_app_bucket_public_access_block" {
+  bucket                  = aws_s3_bucket.react_app_bucket.id
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+resource "aws_s3_bucket_website_configuration" "react_app_bucket_website" {
+  bucket = aws_s3_bucket.react_app_bucket.bucket
+
+  index_document {
+    suffix = "index.html"
+  }
+
+  error_document {
+    key = "index.html"
+  }
+}
+
+resource "aws_s3_bucket_policy" "react_app_bucket_policy" {
+  bucket = aws_s3_bucket.react_app_bucket.id
+  policy = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect = "Allow",
+        Principal = "*",
+        Action = "s3:GetObject",
+        Resource = "${aws_s3_bucket.react_app_bucket.arn}/*"
+      }
+    ]
+  })
+}
+
+resource "aws_s3_object" "react_app_files" {
+  for_each = fileset("${path.module}/Frontend/dist", "**")
+
+  bucket = aws_s3_bucket.react_app_bucket.bucket
+  key    = each.value
+  source = "${path.module}/Frontend/dist/${each.value}"
+}
+
 output "instance_public_ip" {
   description = "The public IP of the web server instance"
   value       = aws_instance.web.public_ip
+}
+
+output "react_app_url" {
+  description = "The URL of the ReactJS application"
+  value       = "http://${aws_s3_bucket.react_app_bucket.bucket}.s3-website-ap-southeast-2.amazonaws.com"
+}
+
+variable "region" {
+  description = "The AWS region to deploy resources"
+  default     = "ap-southeast-2"
 }

@@ -5,7 +5,8 @@ setlocal
 set S3_BUCKET=my-app-deployment-bucket-123e4567-e89b-12d3-a456-426614174000
 set ZIP_FILE=Backend.zip
 set KEY_PATH=C:\Users\Steven\Downloads\Dario\Cloud-a2\my-ec2-key.pem
-set INSTANCE_IP=13.210.73.97
+@REM set INSTANCE_IP=13.210.73.97
+set INSTANCE_IP=3.107.207.154
 
 :: Debugging output
 echo S3_BUCKET=%S3_BUCKET%

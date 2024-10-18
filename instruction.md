@@ -1,4 +1,6 @@
 ## install terraform
+https://developer.hashicorp.com/terraform/install
+
 download / unzip / add path
 verify by
 terraform --version
@@ -83,6 +85,36 @@ Ensure there is an inbound rule allowing traffic on port 3000 (or the port your 
 
 #### Verify
  curl http://13.210.73.97:3000/login/1
+
+## Frontend
+
+#### Setup
+```cmd
+npm create vite@latest Frontend --template react
+cd Frontend
+npm install
+```
+
+#### update terraform - add frontend part
+
+check diff in commit history
+update and apply
+
+#### deploy
+npm i
+npm run build
+aws s3 sync Frontend/dist/ s3://frontend-app-bucket-123e4567-e89b-12d3-a456-426614174090/
+
+
+## Trouble shooting
+if api call fails, check
+- IP changed for the instance
+- SSH into the server, check if the nodemon is running.
+
+
+
+
+
 
 
 
