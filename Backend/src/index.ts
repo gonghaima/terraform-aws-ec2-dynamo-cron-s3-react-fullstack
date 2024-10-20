@@ -1,6 +1,6 @@
 import express from 'express';
 import cors from 'cors';
-import loginRoutes from './routes/loginRoutes';
+import userRoutes from './routes/userRoutes';
 import musicRoutes from './routes/musicRoutes';
 
 const app = express();
@@ -11,7 +11,7 @@ app.use(cors());
 
 app.use(express.json());
 
-app.use('/user', loginRoutes);
+app.use('/user', userRoutes);
 app.use('/music', musicRoutes);
 
 // Listen on all network interfaces

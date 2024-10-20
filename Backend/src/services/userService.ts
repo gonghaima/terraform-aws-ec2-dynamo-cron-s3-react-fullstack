@@ -1,6 +1,7 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
-import { User } from '../models/loginModel';
+import { v4 as uuidv4 } from 'uuid';
+import { User } from '../models/userModel';
 
 const client = new DynamoDBClient({ region: "ap-southeast-2" });
 const ddbDocClient = DynamoDBDocumentClient.from(client);
@@ -22,15 +23,18 @@ export const getUser = async (id: string): Promise<User | undefined> => {
     }
 };
 
-export const createUser = async (user: User): Promise<User> => {
+export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
+    const id = uuidv4();
+    const newUser = { ...user, id };
+
     const params = {
         TableName: tableName,
-        Item: user,
+        Item: newUser,
     };
 
     try {
         await ddbDocClient.send(new PutCommand(params));
-        return user;
+        return newUser;
     } catch (err) {
         console.error("Error", err);
         throw new Error("Could not create user");
