@@ -105,6 +105,9 @@ npm i
 npm run build
 aws s3 sync Frontend/dist/ s3://frontend-app-bucket-123e4567-e89b-12d3-a456-426614174090/
 
+#### add router lib
+npm install react-router-dom
+
 
 ## Trouble shooting
 if api call fails, check

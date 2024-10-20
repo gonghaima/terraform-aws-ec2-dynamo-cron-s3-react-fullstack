@@ -1,6 +1,7 @@
 
 create new user
 curl -X POST http://localhost:3000/login -H "Content-Type: application/json" -d "{\"id\": \"1\", \"username\": \"testuser\", \"password\": \"password\"}"
+curl -X POST http://localhost:3000/user -H "Content-Type: application/json" -d "{\"id\": \"2\", \"username\": \"testuser\", \"password\": \"a\", \"email\": \"test@gmail.com\"}"
 
 get user
 curl http://localhost:3000/login/1
