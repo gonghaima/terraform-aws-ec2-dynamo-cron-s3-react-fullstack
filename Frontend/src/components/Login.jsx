@@ -16,7 +16,8 @@ const Login = () => {
                 body: JSON.stringify({ email, password }),
             });
             if (response.ok) {
-                navigate('/main');
+                const userData = await response.json();
+                navigate('/main', { state: { user: userData } });
             } else {
                 setError('Email or password is invalid');
             }

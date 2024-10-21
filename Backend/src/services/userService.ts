@@ -1,22 +1,42 @@
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
-import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand } from "@aws-sdk/lib-dynamodb";
+import { DynamoDBDocumentClient, GetCommand, PutCommand, ScanCommand, UpdateCommand, BatchGetCommand } from "@aws-sdk/lib-dynamodb";
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../models/userModel';
+import { Music } from "../models/musicModel";
 
 const client = new DynamoDBClient({ region: "ap-southeast-2" });
 const ddbDocClient = DynamoDBDocumentClient.from(client);
 
-const tableName = "login-table";
+const loginTable = "login-table";
+const musicTable = "music-table";
 
 export const getUser = async (id: string): Promise<User | undefined> => {
     const params = {
-        TableName: tableName,
+        TableName: loginTable,
         Key: { id },
     };
 
     try {
         const data = await ddbDocClient.send(new GetCommand(params));
-        return data.Item as User;
+        const user = data.Item as User;
+
+        if (user && user.subscriptions && user.subscriptions.length > 0) {
+            const musicParams = {
+                RequestItems: {
+                    [musicTable]: {
+                        Keys: user.subscriptions.map(musicId => ({ id: musicId })),
+                    },
+                },
+            };
+
+            const musicData = await ddbDocClient.send(new BatchGetCommand(musicParams));
+            console.log("Music data", musicData);
+            user.subscriptionsData = musicData?.Responses?.[musicTable] ? musicData.Responses[musicTable] as Music[] : [];
+        }
+
+        console.log(user.subscriptionsData)
+
+        return user;
     } catch (err) {
         console.error("Error", err);
         throw new Error("Could not retrieve user");
@@ -25,10 +45,10 @@ export const getUser = async (id: string): Promise<User | undefined> => {
 
 export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
     const id = uuidv4();
-    const newUser = { ...user, id };
+    const newUser = { ...user, id, subscriptions: [] };
 
     const params = {
-        TableName: tableName,
+        TableName: loginTable,
         Item: newUser,
     };
 
@@ -43,7 +63,7 @@ export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
 
 export const authenticateUser = async (email: string, password: string): Promise<User | null> => {
     const params = {
-        TableName: tableName,
+        TableName: loginTable,
         FilterExpression: "email = :email",
         ExpressionAttributeValues: {
             ":email": email,
@@ -62,5 +82,59 @@ export const authenticateUser = async (email: string, password: string): Promise
     } catch (err) {
         console.error("Error", err);
         throw new Error("Could not authenticate user");
+    }
+};
+
+export const addSubscription = async (userId: string, musicId: string): Promise<void> => {
+    const user = await getUser(userId);
+    if (!user) {
+        throw new Error("User not found");
+    }
+
+    if (user.subscriptions && user.subscriptions.includes(musicId)) {
+        // Subscription already exists, no need to add
+        return;
+    }
+
+    const params = {
+        TableName: loginTable,
+        Key: { id: userId },
+        UpdateExpression: "SET subscriptions = list_append(if_not_exists(subscriptions, :empty_list), :musicId)",
+        ExpressionAttributeValues: {
+            ":musicId": [musicId],
+            ":empty_list": [],
+        },
+    };
+
+    try {
+        await ddbDocClient.send(new UpdateCommand(params));
+    } catch (err) {
+        console.error("Error", err);
+        throw new Error("Could not add subscription");
+    }
+};
+
+export const removeSubscription = async (userId: string, musicId: string): Promise<void> => {
+    const user = await getUser(userId);
+    if (!user || !user.subscriptions) {
+        throw new Error("User or subscriptions not found");
+    }
+
+    const updatedSubscriptions = user.subscriptions.filter(id => id !== musicId);
+
+    const params = {
+        TableName: loginTable,
+        Key: { id: userId },
+        UpdateExpression: "SET subscriptions = :updatedSubscriptions",
+        ExpressionAttributeValues: {
+            ":updatedSubscriptions": updatedSubscriptions,
+        },
+    };
+
+    try {
+        await ddbDocClient.send(new UpdateCommand(params));
+    } catch (err) {
+        console.error("Error", err);
+        throw new Error("Could not remove subscription");
     }
 };

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const Main = () => {
     const [user, setUser] = useState(null);
@@ -7,12 +7,26 @@ const Main = () => {
     const [query, setQuery] = useState({ title: '', year: '', artist: '' });
     const [results, setResults] = useState([]);
     const navigate = useNavigate();
+    const location = useLocation();
 
     useEffect(() => {
-        // Fetch user data and subscriptions
-        // Example: setUser({ username: 'JohnDoe' });
-        // Example: setSubscriptions([{ title: 'Song1', artist: 'Artist1', year: '2021', image_url: '...' }]);
-    }, []);
+        // Get user data from location state
+        const userData = location.state?.user;
+        if (userData) {
+            setUser(userData);
+            fetchSubscriptions(userData.id);
+        }
+    }, [location.state]);
+
+    const fetchSubscriptions = async (userId) => {
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/user/${userId}`);
+            const data = await response.json();
+            setSubscriptions(data.subscriptionsData || []);
+        } catch (err) {
+            console.error('An error occurred', err);
+        }
+    };
 
     const handleQuery = async (e) => {
         e.preventDefault();
@@ -30,11 +44,33 @@ const Main = () => {
     };
 
     const handleSubscribe = async (music) => {
-        // Handle subscription logic
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/subscriptions/add`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, musicId: music.id }),
+            });
+            if (response.ok) {
+                fetchSubscriptions(user.id);
+            }
+        } catch (err) {
+            console.error('An error occurred', err);
+        }
     };
 
     const handleRemove = async (music) => {
-        // Handle removal logic
+        try {
+            const response = await fetch(`${import.meta.env.VITE_API_BASE_URL}/subscriptions/remove`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ userId: user.id, musicId: music.id }),
+            });
+            if (response.ok) {
+                fetchSubscriptions(user.id);
+            }
+        } catch (err) {
+            console.error('An error occurred', err);
+        }
     };
 
     const handleLogout = () => {
@@ -51,8 +87,9 @@ const Main = () => {
                 {subscriptions.map((music) => (
                     <div key={music.title}>
                         <p>{music.title} by {music.artist} ({music.year})</p>
-                        <img src={music.image_url} alt={music.artist} />
-                        <button onClick={() => handleRemove(music)}>Remove</button>
+                        <img src={music.img_url} alt={music.artist} />
+                        <button onClick={() => handleRemove({ id: music.id })}>Remove</button>
+
                     </div>
                 ))}
             </div>
@@ -74,9 +111,9 @@ const Main = () => {
                     <button type="submit">Query</button>
                 </form>
                 {results.map((music) => (
-                    <div key={music.title}>
+                    <div key={music.id}>
                         <p>{music.title} by {music.artist} ({music.year})</p>
-                        <img src={music.image_url} alt={music.artist} />
+                        <img src={music.img_url} alt={music.artist} />
                         <button onClick={() => handleSubscribe(music)}>Subscribe</button>
                     </div>
                 ))}
