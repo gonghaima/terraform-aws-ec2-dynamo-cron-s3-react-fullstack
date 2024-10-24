@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { Container, TextField, Button, Typography, Link, Box } from '@mui/material';
 
 const Register = () => {
     const [email, setEmail] = useState('');
@@ -27,28 +28,53 @@ const Register = () => {
     };
 
     return (
-        <div>
-            <h2>Register</h2>
-            <form onSubmit={handleRegister}>
-                <div>
-                    <label>Email:</label>
-                    <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-                </div>
-                <div>
-                    <label>Username:</label>
-                    <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} required />
-                </div>
-                <div>
-                    <label>Password:</label>
-                    <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
-                </div>
-                <button type="submit">Register</button>
-            </form>
-            {error && <p>{error}</p>}
-            <p>
-                Already have an account? <a href="/">Login</a>
-            </p>
-        </div>
+        <Container maxWidth="sm">
+            <Box sx={{ mt: 8 }}>
+                <Typography variant="h4" component="h1" gutterBottom>
+                    Register
+                </Typography>
+                <form onSubmit={handleRegister}>
+                    <TextField
+                        label="Email"
+                        type="email"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        fullWidth
+                        margin="normal"
+                        required
+                    />
+                    <TextField
+                        label="Username"
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        fullWidth
+                        margin="normal"
+                        required
+                    />
+                    <TextField
+                        label="Password"
+                        type="password"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        fullWidth
+                        margin="normal"
+                        required
+                    />
+                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+                        Register
+                    </Button>
+                </form>
+                {error && (
+                    <Typography color="error" sx={{ mt: 2 }}>
+                        {error}
+                    </Typography>
+                )}
+                <Typography sx={{ mt: 2 }}>
+                    Already have an account? <Link href="/">Login</Link>
+                </Typography>
+            </Box>
+        </Container>
     );
 };
 

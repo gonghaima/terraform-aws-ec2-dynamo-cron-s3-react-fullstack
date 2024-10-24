@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { Container, Typography, Button, TextField, Box, Card, CardContent, CardMedia, Grid, AppBar, Toolbar, IconButton } from '@mui/material';
 
 const Main = () => {
     const [user, setUser] = useState(null);
@@ -78,47 +79,101 @@ const Main = () => {
     };
 
     return (
-        <div>
-            <h2>Main Page</h2>
-            {user && <p>Welcome, {user.username}</p>}
-            <button onClick={handleLogout}>Logout</button>
-            <div>
-                <h3>Subscriptions</h3>
-                {subscriptions.map((music) => (
-                    <div key={music.title}>
-                        <p>{music.title} by {music.artist} ({music.year})</p>
-                        <img src={music.img_url} alt={music.artist} />
-                        <button onClick={() => handleRemove({ id: music.id })}>Remove</button>
+        <Container maxWidth="md">
+            <AppBar position="static">
+                <Toolbar>
+                    <IconButton
+                        size="large"
+                        edge="start"
+                        color="inherit"
+                        aria-label="menu"
+                        sx={{ mr: 2 }}
+                    >
+                        {user && (
+                            <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
+                                Welcome, {user.username}
+                            </Typography>
+                        )}
+                    </IconButton>
+                    <Typography variant="h6" component="div" sx={{ flexGrow: 1 }}>
 
-                    </div>
-                ))}
-            </div>
-            <div>
-                <h3>Query Music</h3>
+                    </Typography>
+                    <Button variant="contained" color="secondary" onClick={handleLogout}>
+                        Logout
+                    </Button>
+                </Toolbar>
+            </AppBar>
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                    Subscriptions
+                </Typography>
+                <Grid container spacing={2}>
+                    {subscriptions.map((music) => (
+                        <Grid item xs={12} sm={6} md={4} key={music.id}>
+                            <Card>
+                                <CardMedia component="img" height="140" image={music.img_url} alt={music.artist} />
+                                <CardContent>
+                                    <Typography variant="h6" component="p">
+                                        {music.title} by {music.artist} ({music.year})
+                                    </Typography>
+                                    <Button variant="contained" color="secondary" onClick={() => handleRemove(music)} sx={{ mt: 2 }}>
+                                        Remove
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
+            <Box sx={{ mt: 4 }}>
+                <Typography variant="h5" component="h2" gutterBottom>
+                    Query Music
+                </Typography>
                 <form onSubmit={handleQuery}>
-                    <div>
-                        <label>Title:</label>
-                        <input type="text" value={query.title} onChange={(e) => setQuery({ ...query, title: e.target.value })} />
-                    </div>
-                    <div>
-                        <label>Year:</label>
-                        <input type="text" value={query.year} onChange={(e) => setQuery({ ...query, year: e.target.value })} />
-                    </div>
-                    <div>
-                        <label>Artist:</label>
-                        <input type="text" value={query.artist} onChange={(e) => setQuery({ ...query, artist: e.target.value })} />
-                    </div>
-                    <button type="submit">Query</button>
+                    <TextField
+                        label="Title"
+                        value={query.title}
+                        onChange={(e) => setQuery({ ...query, title: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
+                    <TextField
+                        label="Year"
+                        value={query.year}
+                        onChange={(e) => setQuery({ ...query, year: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
+                    <TextField
+                        label="Artist"
+                        value={query.artist}
+                        onChange={(e) => setQuery({ ...query, artist: e.target.value })}
+                        fullWidth
+                        margin="normal"
+                    />
+                    <Button type="submit" variant="contained" color="primary" fullWidth sx={{ mt: 2 }}>
+                        Query
+                    </Button>
                 </form>
-                {results.map((music) => (
-                    <div key={music.id}>
-                        <p>{music.title} by {music.artist} ({music.year})</p>
-                        <img src={music.img_url} alt={music.artist} />
-                        <button onClick={() => handleSubscribe(music)}>Subscribe</button>
-                    </div>
-                ))}
-            </div>
-        </div>
+                <Grid container spacing={2} sx={{ mt: 2 }}>
+                    {results.map((music) => (
+                        <Grid item xs={12} sm={6} md={4} key={music.id}>
+                            <Card>
+                                <CardMedia component="img" height="140" image={music.img_url} alt={music.artist} />
+                                <CardContent>
+                                    <Typography variant="h6" component="p">
+                                        {music.title} by {music.artist} ({music.year})
+                                    </Typography>
+                                    <Button variant="contained" color="primary" onClick={() => handleSubscribe(music)} sx={{ mt: 2 }}>
+                                        Subscribe
+                                    </Button>
+                                </CardContent>
+                            </Card>
+                        </Grid>
+                    ))}
+                </Grid>
+            </Box>
+        </Container>
     );
 };
 
