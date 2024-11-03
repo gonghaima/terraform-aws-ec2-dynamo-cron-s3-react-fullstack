@@ -44,6 +44,26 @@ export const getUser = async (id: string): Promise<User | undefined> => {
 };
 
 export const createUser = async (user: Omit<User, 'id'>): Promise<User> => {
+    // Check if the email already exists
+    const checkEmailParams = {
+        TableName: loginTable,
+        FilterExpression: "email = :email",
+        ExpressionAttributeValues: {
+            ":email": user.email,
+        },
+    };
+
+    try {
+        const emailCheckData = await ddbDocClient.send(new ScanCommand(checkEmailParams));
+        if (emailCheckData.Items && emailCheckData.Items.length > 0) {
+            throw new Error("The email already exists");
+        }
+    } catch (err) {
+        console.error("Error checking email", err);
+        throw new Error("Could not check email");
+    }
+
+    // Proceed with creating the user
     const id = uuidv4();
     const newUser = { ...user, id, subscriptions: [] };
 

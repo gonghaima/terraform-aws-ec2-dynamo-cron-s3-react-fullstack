@@ -114,6 +114,21 @@ if api call fails, check
 - IP changed for the instance
 - SSH into the server, check if the nodemon is running.
 
+## Host FE on BE
+cd Frontend
+npm run build
+
+### copy FE code to BE directory
+in Backend directory, create an empty folder 'public'
+cp -r Frontend/dist/* Backend/public/
+
+
+
+### Load image to s3 and update db
+install dependencies
+npm install aws-sdk axios
+
+check s3, delete unrelated folders, etc. Only keep images folder.
 
 
 

@@ -49,3 +49,4 @@ Backend/.env
 my-ec2-key.ppk
 Backend.zip
 my-ec2-key.pem
+Backend/public

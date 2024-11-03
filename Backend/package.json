@@ -6,6 +6,7 @@
   "scripts": {
     "start": "ts-node src/index.ts",
     "load-data": "ts-node src/loadData.ts",
+    "update-image": "ts-node src/updateImageUrl.ts",
     "build": "tsc",
     "deploy": "node deploy.js",
     "nodemon-start": "nodemon --watch src --exec ts-node src/index.ts"
@@ -16,6 +17,8 @@
   "dependencies": {
     "@aws-sdk/client-dynamodb": "^3.670.0",
     "@aws-sdk/lib-dynamodb": "^3.670.0",
+    "aws-sdk": "^2.1691.0",
+    "axios": "^1.7.7",
     "cors": "^2.8.5",
     "express": "^4.21.1",
     "uuid": "^10.0.0"
